@@ -1,106 +1,71 @@
 package com.chaosthedude.naturescompass.config;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
-import com.chaosthedude.naturescompass.NaturesCompass;
-import com.google.common.collect.Lists;
-
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
-import net.minecraftforge.fml.client.event.ConfigChangedEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.common.ForgeConfigSpec;
 
 public class ConfigHandler {
+	
+	private static final ForgeConfigSpec.Builder GENERAL_BUILDER = new ForgeConfigSpec.Builder();
+	private static final ForgeConfigSpec.Builder CLIENT_BUILDER = new ForgeConfigSpec.Builder();
+	
+    public static final General GENERAL = new General(GENERAL_BUILDER);
+    public static final Client CLIENT = new Client(CLIENT_BUILDER);
+    
+    public static final ForgeConfigSpec GENERAL_SPEC = GENERAL_BUILDER.build();
+    public static final ForgeConfigSpec CLIENT_SPEC = CLIENT_BUILDER.build();
 
-	public static Configuration config;
+    public static class General {
+        public final ForgeConfigSpec.BooleanValue allowTeleport;
+        public final ForgeConfigSpec.IntValue distanceModifier;
+        public final ForgeConfigSpec.IntValue sampleSpaceModifier;
+        public final ForgeConfigSpec.ConfigValue<List<String>> biomeBlacklist;
+        public final ForgeConfigSpec.IntValue maxSamples;
 
-	public static boolean allowTeleport = true;
-	public static String[] biomeBlacklist = {};
-	public static int distanceModifier = 2500;
-	public static int sampleSpaceModifier = 16;
-	public static int maxSamples = 100000;
-	public static boolean displayWithChatOpen = true;
-	public static boolean fixBiomeNames = true;
-	public static int lineOffset = 1;
+        General(ForgeConfigSpec.Builder builder) {
+        	String desc;
+            builder.push("General");
+            
+            desc = "Allows a player to teleport to a located biome when in creative mode, opped, or in cheat mode.";
+            allowTeleport = builder.comment(desc).define("allowTeleport", true);
 
-	public static void loadConfig(File configFile) {
-		config = new Configuration(configFile);
+            desc = "biomeSize * distanceModifier = maxSearchDistance. Raising this value will increase search accuracy but will potentially make the process more resource intensive.";
+    		distanceModifier = builder.comment(desc).defineInRange("distanceModifier", 2500, 0, 1000000);
 
-		config.load();
-		init();
+    		desc = "biomeSize * sampleSpaceModifier = sampleSpace. Lowering this value will increase search accuracy but will make the process more resource intensive.";
+    		sampleSpaceModifier = builder.comment(desc).defineInRange("sampleSpaceModifier", 16, 0, 1000000);
 
-		MinecraftForge.EVENT_BUS.register(new ChangeListener());
-	}
+    		desc = "A list of biomes that the compass will not be able to search for. Specify by resource location (ex: minecraft:ocean), name (ex: Ocean), or ID (ex: 0)";
+    		biomeBlacklist = builder.comment(desc).define("biomeBlacklist", new ArrayList<String>());
 
-	public static void init() {
-		String comment;
+    		desc = "The maximum samples to be taken when searching for a biome.";
+    		maxSamples = builder.comment(desc).defineInRange("maxSamples", 100000, 0, 1000000);
 
-		comment = "Allows a player to teleport to a located biome when in creative mode, opped, or in cheat mode.";
-		allowTeleport = loadBool(Configuration.CATEGORY_GENERAL, "naturescompass.allowTeleport", comment, allowTeleport);
+            builder.pop();
+        }
+    }
+    
+    public static class Client {
+    	public final ForgeConfigSpec.BooleanValue displayWithChatOpen;
+        public final ForgeConfigSpec.BooleanValue fixBiomeNames;
+        public final ForgeConfigSpec.IntValue lineOffset;
+        
+        Client(ForgeConfigSpec.Builder builder) {
+        	String desc;
+        	builder.push("Client");
+        	
+        	desc = "Displays Nature's Compass information even while chat is open.";
+    		displayWithChatOpen = builder.comment(desc).define("displayWithChatOpen", true);
 
-		comment = "biomeSize * distanceModifier = maxSearchDistance. Raising this value will increase search accuracy but will potentially make the process more resource intensive.";
-		distanceModifier = loadInt(Configuration.CATEGORY_GENERAL, "naturescompass.distanceModifier", comment, distanceModifier);
-
-		comment = "biomeSize * sampleSpaceModifier = sampleSpace. Lowering this value will increase search accuracy but will make the process more resource intensive.";
-		sampleSpaceModifier = loadInt(Configuration.CATEGORY_GENERAL, "naturescompass.sampleSpaceModifier", comment, sampleSpaceModifier);
-
-		comment = "A list of biomes that the compass will not be able to search for. Specify by resource location (ex: minecraft:ocean), name (ex: Ocean), or ID (ex: 0)";
-		biomeBlacklist = loadStringArray(Configuration.CATEGORY_GENERAL, "naturescompass.biomeBlacklist", comment, biomeBlacklist);
-
-		comment = "The maximum samples to be taken when searching for a biome.";
-		maxSamples = loadInt(Configuration.CATEGORY_GENERAL, "naturescompass.maxSamples", comment, maxSamples);
-		
-		comment = "Displays Nature's Compass information even while chat is open.";
-		displayWithChatOpen = loadBool(Configuration.CATEGORY_CLIENT, "naturescompass.displayWithChatOpen", comment, displayWithChatOpen);
-
-		comment = "Fixes biome names by adding missing spaces. Ex: ForestHills becomes Forest Hills";
-		fixBiomeNames = loadBool(Configuration.CATEGORY_CLIENT, "naturescompass.fixBiomeNames", comment, fixBiomeNames);
-
-		comment = "The line offset for information rendered on the HUD.";
-		lineOffset = loadInt(Configuration.CATEGORY_CLIENT, "naturescompass.lineOffset", comment, lineOffset);
-
-		if (config.hasChanged()) {
-			config.save();
-		}
-	}
-
-	public static int loadInt(String category, String name, String comment, int def) {
-		final Property prop = config.get(category, name, def);
-		prop.setComment(comment);
-		int val = prop.getInt(def);
-		if (val < 0) {
-			val = def;
-			prop.set(def);
-		}
-
-		return val;
-	}
-
-	public static boolean loadBool(String category, String name, String comment, boolean def) {
-		final Property prop = config.get(category, name, def);
-		prop.setComment(comment);
-		return prop.getBoolean(def);
-	}
-
-	public static String[] loadStringArray(String category, String comment, String name, String[] def) {
-		Property prop = config.get(category, name, def);
-		prop.setComment(comment);
-		return prop.getStringList();
-	}
-
-	public static List<String> getBiomeBlacklist() {
-		return Lists.newArrayList(biomeBlacklist);
-	}
-
-	public static class ChangeListener {
-		@SubscribeEvent
-		public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
-			if (event.getModID().equals(NaturesCompass.MODID)) {
-				init();
-			}
-		}
-	}
+    		desc = "Fixes biome names by adding missing spaces. Ex: ForestHills becomes Forest Hills";
+    		fixBiomeNames = builder.comment(desc).define("fixBiomeNames", true);
+    		
+    		desc = "The line offset for information rendered on the HUD.";
+    		lineOffset = builder.comment(desc).defineInRange("lineOffset", 1, 0, 50);
+        
+    		builder.pop();
+        }
+    }
 
 }

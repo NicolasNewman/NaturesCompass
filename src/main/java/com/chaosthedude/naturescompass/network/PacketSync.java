@@ -1,40 +1,35 @@
 package com.chaosthedude.naturescompass.network;
 
+import java.util.function.Supplier;
+
 import com.chaosthedude.naturescompass.NaturesCompass;
 
-import io.netty.buffer.ByteBuf;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraft.network.PacketBuffer;
+import net.minecraftforge.fml.network.NetworkEvent;
 
-public class PacketSync implements IMessage {
+public class PacketSync {
 
 	private boolean canTeleport;
 
-	public PacketSync() {
-	}
+	public PacketSync() {}
 	
 	public PacketSync(boolean canTeleport) {
 		this.canTeleport = canTeleport;
 	}
 
-	@Override
-	public void fromBytes(ByteBuf buf) {
+	public PacketSync(PacketBuffer buf) {
 		canTeleport = buf.readBoolean();
 	}
 
-	@Override
-	public void toBytes(ByteBuf buf) {
+	public void toBytes(PacketBuffer buf) {
 		buf.writeBoolean(canTeleport);
 	}
 
-	public static class Handler implements IMessageHandler<PacketSync, IMessage> {
-		@Override
-		public IMessage onMessage(PacketSync packet, MessageContext ctx) {
-			NaturesCompass.canTeleport = packet.canTeleport;
-
-			return null;
-		}
+	public void handle(Supplier<NetworkEvent.Context> ctx) {
+		ctx.get().enqueueWork(() -> {
+			NaturesCompass.canTeleport = canTeleport;
+		});
+		ctx.get().setPacketHandled(true);
 	}
 
 }

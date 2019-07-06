@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 
 import com.chaosthedude.naturescompass.util.RenderUtils;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiTextField;
@@ -12,8 +11,10 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.resources.I18n;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
+@OnlyIn(Dist.CLIENT)
 public class GuiTransparentTextField extends GuiTextField {
 	
 	private FontRenderer fontRenderer;
@@ -26,7 +27,7 @@ public class GuiTransparentTextField extends GuiTextField {
 	}
 	
 	@Override
-	public void drawTextBox() {
+	public void drawTextField(int mouseX, int mouseY, float partialTicks) {
 		if (getVisible()) {
             if (getEnableBackgroundDrawing()) {
             	final int color = (int) (255.0F * 0.55f);
@@ -168,10 +169,10 @@ public class GuiTransparentTextField extends GuiTextField {
 
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuffer();
-        GlStateManager.color(0.0F, 0.0F, 255.0F, 255.0F);
+        GlStateManager.color4f(0.0F, 0.0F, 255.0F, 255.0F);
         GlStateManager.disableTexture2D();
         GlStateManager.enableColorLogic();
-        GlStateManager.colorLogicOp(GlStateManager.LogicOp.OR_REVERSE);
+        GlStateManager.logicOp(GlStateManager.LogicOp.OR_REVERSE);
         bufferbuilder.begin(7, DefaultVertexFormats.POSITION);
         bufferbuilder.pos((double) startX, (double) endY, 0.0D).endVertex();
         bufferbuilder.pos((double) endX, (double) endY, 0.0D).endVertex();

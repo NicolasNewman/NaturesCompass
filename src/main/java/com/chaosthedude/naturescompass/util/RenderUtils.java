@@ -11,16 +11,16 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 public class RenderUtils {
 
-	private static final Minecraft mc = Minecraft.getMinecraft();
+	private static final Minecraft mc = Minecraft.getInstance();
 	private static final FontRenderer fontRenderer = mc.fontRenderer;
 
 	public static void drawLineOffsetStringOnHUD(String string, int xOffset, int yOffset, int color, int lineOffset) {
-		drawStringOnHUD(string, xOffset, yOffset, color, ConfigHandler.lineOffset + lineOffset);
+		drawStringOnHUD(string, xOffset, yOffset, color, ConfigHandler.CLIENT.lineOffset.get() + lineOffset);
 	}
 
 	public static void drawStringOnHUD(String string, int xOffset, int yOffset, int color, int lineOffset) {
 		yOffset += lineOffset * 9;
-		fontRenderer.drawString(string, 2 + xOffset, 2 + yOffset, color, true);
+		fontRenderer.drawStringWithShadow(string, 2 + xOffset, 2 + yOffset, color);
 	}
 	
 	public static void drawRect(int left, int top, int right, int bottom, int color) {
@@ -46,8 +46,8 @@ public class RenderUtils {
 
 		GlStateManager.enableBlend();
 		GlStateManager.disableTexture2D();
-		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-		GlStateManager.color(red, green, blue, alpha);
+		GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+		GlStateManager.color4f(red, green, blue, alpha);
 
 		buffer.begin(7, DefaultVertexFormats.POSITION);
 		buffer.pos((double) left, (double) bottom, 0.0D).endVertex();
